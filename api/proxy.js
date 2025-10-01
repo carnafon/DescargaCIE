@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -29,11 +27,11 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: 'Error al obtener el PDF' });
     }
 
-    const pdfBuffer = await response.buffer();
+    const pdfBuffer = await response.arrayBuffer();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=\"archivo.pdf\"');
-    res.send(pdfBuffer);
+    res.setHeader('Content-Disposition', 'attachment; filename="archivo.pdf"');
+    res.send(Buffer.from(pdfBuffer));
   } catch (error) {
     console.error('Error en proxy:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
