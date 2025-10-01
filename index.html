@@ -6,52 +6,35 @@
   <title>Descargar PDF vía Proxy</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; }
-    label { display: block; margin-top: 15px; }
-    input, textarea, button { width: 100%; padding: 8px; margin-top: 5px; }
-    button { background-color: #007bff; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #0056b3; }
+    label { display: block; margin-top: 10px; }
+    input[type="text"], input[type="password"] { width: 300px; padding: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; }
   </style>
 </head>
 <body>
-  <h2>Descargar PDF vía Proxy en Vercel</h2>
-  <form id="pdfForm">
-    <label for="proxyUrl">URL del Proxy (Vercel)</label>
-    <input type="text" id="proxyUrl" placeholder="https://tu-proxy.vercel.app/api/proxy" required>
+  <h2>Descargar PDF vía Proxy</h2>
+  <form id="descargaForm">
+    <label for="pdfUrl">URL del archivo PDF:</label>
+    <input type="text" id="pdfUrl" name="pdfUrl" required>
 
-    <label for="targetUrl">URL del PDF (endpoint real)</label>
-    <input type="text" id="targetUrl" placeholder="https://outbound-attachment.oees-kraken.energy/api/v1/attachments/download_file/?file=..." required>
+    <label for="username">Usuario:</label>
+    <input type="text" id="username" name="username" required>
 
-    <label for="username">Usuario</label>
-    <input type="text" id="username" required>
-
-    <label for="password">Contraseña</label>
-    <input type="password" id="password" required>
-
-    <label for="params">Parámetros JSON para el POST</label>
-    <textarea id="params" rows="5" placeholder='{"clave1":"valor1"}'></textarea>
+    <label for="password">Contraseña:</label>
+    <input type="password" id="password" name="password" required>
 
     <button type="submit">Descargar PDF</button>
   </form>
 
   <script>
-    document.getElementById("pdfForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
+    const proxyUrl = "https://descarga-cie.vercel.app/api/proxy"; // URL prefijada y oculta
 
-      const proxyUrl = document.getElementById("proxyUrl").value;
-      const targetUrl = document.getElementById("targetUrl").value;
+    document.getElementById("descargaForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const pdfUrl = document.getElementById("pdfUrl").value;
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-      const paramsText = document.getElementById("params").value;
-
-      let params = {};
-      try {
-        if (paramsText.trim()) {
-          params = JSON.parse(paramsText);
-        }
-      } catch (err) {
-        alert("Error en el formato JSON de los parámetros.");
-        return;
-      }
 
       try {
         const response = await fetch(proxyUrl, {
@@ -60,15 +43,15 @@
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            url: targetUrl,
+            url: pdfUrl,
             username: username,
             password: password,
-            params: params
+            params: {} // parámetros JSON ocultos
           })
         });
 
         if (!response.ok) {
-          throw new Error("Error al obtener el PDF");
+          throw new Error("Error al descargar el PDF");
         }
 
         const blob = await response.blob();
