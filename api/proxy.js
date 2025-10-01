@@ -1,4 +1,12 @@
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end(); // Respuesta al preflight
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
@@ -9,7 +17,7 @@ export default async function handler(req, res) {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
+        'Authorization': 'Basic.from(`${username}:${password}`).toString('base64'),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
@@ -22,7 +30,7 @@ export default async function handler(req, res) {
     const pdfBuffer = await response.arrayBuffer();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="archivo.pdf"');
+    res.setHeader('Content-Disposition', 'attachment; filename=\"archivo.pdf\"');
     res.send(Buffer.from(pdfBuffer));
   } catch (error) {
     res.status(500).json({ error: 'Error interno del servidor' });
