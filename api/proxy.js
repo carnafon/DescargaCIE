@@ -1,23 +1,25 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end(); // Respuesta al preflight
+    return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const { url, username, password, params } = req.body;
-
   try {
+    const { url, username, password, params } = req.body;
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': 'Basic.from(`${username}:${password}`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
@@ -27,12 +29,13 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: 'Error al obtener el PDF' });
     }
 
-    const pdfBuffer = await response.arrayBuffer();
+    const pdfBuffer = await response.buffer();
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=\"archivo.pdf\"');
-    res.send(Buffer.from(pdfBuffer));
+    res.send(pdfBuffer);
   } catch (error) {
+    console.error('Error en proxy:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 }
