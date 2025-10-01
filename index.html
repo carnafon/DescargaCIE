@@ -3,57 +3,85 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Descargar PDF vía POST</title>
+  <title>Descargar PDF vía Proxy</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    label { display: block; margin-top: 15px; }
+    input, textarea, button { width: 100%; padding: 8px; margin-top: 5px; }
+    button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+  </style>
 </head>
 <body>
-  <h2>Descargar PDF mediante POST con autenticación Basic</h2>
+  <h2>Descargar PDF vía Proxy en Vercel</h2>
   <form id="pdfForm">
-    <label for="url">URL del servicio:</label><br>
-    <input type="text" id="url" name="url" size="80" required><br><br>
+    <label for="proxyUrl">URL del Proxy (Vercel)</label>
+    <input type="text" id="proxyUrl" placeholder="https://tu-proxy.vercel.app/api/proxy" required>
 
-    <label for="username">Usuario:</label><br>
-    <input type="text" id="username" name="username" required><br><br>
+    <label for="targetUrl">URL del PDF (endpoint real)</label>
+    <input type="text" id="targetUrl" placeholder="https://outbound-attachment.oees-kraken.energy/api/v1/attachments/download_file/?file=..." required>
 
-    <label for="password">Contraseña:</label><br>
-    <input type="password" id="password" name="password" required><br><br>
+    <label for="username">Usuario</label>
+    <input type="text" id="username" required>
 
-    <label for="params">Parámetros JSON para el POST:</label><br>
-    <textarea id="params" name="params" rows="6" cols="80">{}</textarea><br><br>
+    <label for="password">Contraseña</label>
+    <input type="password" id="password" required>
+
+    <label for="params">Parámetros JSON para el POST</label>
+    <textarea id="params" rows="5" placeholder='{"clave1":"valor1"}'></textarea>
 
     <button type="submit">Descargar PDF</button>
   </form>
 
   <script>
-    document.getElementById("pdfForm").addEventListener("submit", async function(event) {
-      event.preventDefault();
+    document.getElementById("pdfForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
 
-      const url = document.getElementById("url").value;
+      const proxyUrl = document.getElementById("proxyUrl").value;
+      const targetUrl = document.getElementById("targetUrl").value;
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
-      const params = document.getElementById("params").value;
+      const paramsText = document.getElementById("params").value;
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Authorization": "Basic " + btoa(username + ":" + password),
-          "Content-Type": "application/json"
-        },
-        body: params
-      });
-
-      if (!response.ok) {
-        alert("Error al descargar el PDF: " + response.statusText);
+      let params = {};
+      try {
+        if (paramsText.trim()) {
+          params = JSON.parse(paramsText);
+        }
+      } catch (err) {
+        alert("Error en el formato JSON de los parámetros.");
         return;
       }
 
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = "archivo.pdf";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      try {
+        const response = await fetch(proxyUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            url: targetUrl,
+            username: username,
+            password: password,
+            params: params
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al obtener el PDF");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "archivo.pdf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
     });
   </script>
 </body>
