@@ -1,19 +1,19 @@
-export default async function handler(req, res) {
+const express = require('express');
+const router = express.Router();
+
+router.options('/', (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  return res.status(200).end();
+});
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+router.post('/', async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
+  const { url, username, password, params } = req.body;
 
   try {
-    const { url, username, password, params } = req.body;
-
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -36,4 +36,6 @@ export default async function handler(req, res) {
     console.error('Error en proxy:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
-}
+});
+
+module.exports = router;
