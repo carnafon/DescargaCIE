@@ -1,9 +1,9 @@
 const express = require('express');
-const app = express();
-const proxy = require('./api/proxy');
+const proxyRouter = require('./api/proxy');
 
+const app = express();
 app.use(express.json());
-app.use('/api/proxy', proxy);
+app.use('/api/proxy', proxyRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
