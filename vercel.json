@@ -11,10 +11,5 @@
       "src": "/api/proxy",
       "dest": "api/proxy.js"
     }
-  ],
-  "functions": {
-    "api/proxy.js": {
-      "methods": ["POST", "OPTIONS"]
-    }
-  }
+  ]
 }
