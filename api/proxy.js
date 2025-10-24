@@ -1,7 +1,14 @@
 const express = require('express');
+const { Agent } = require('undici'); // 👈 importa Agent de undici
 const router = express.Router();
 
-// --- Permitir preflight (CORS) ---
+// --- Agente personalizado con más tiempo de conexión ---
+const agent = new Agent({
+  connect: {
+    timeout: 30000 // ⏱️ 30 segundos para conectar
+  }
+});
+
 router.options('/', (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -9,14 +16,13 @@ router.options('/', (req, res) => {
   return res.status(200).end();
 });
 
-// --- Petición principal ---
 router.post('/', async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   const { url, username, password, params } = req.body;
 
-  // Configura el timeout (por ejemplo, 30 segundos)
-  const TIMEOUT_MS = 30000;
+  // Timeout total opcional (para abortar incluso si conecta)
+  const TIMEOUT_MS = 60000;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -28,7 +34,8 @@ router.post('/', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params),
-      signal: controller.signal, // 👈 importante
+      signal: controller.signal,
+      dispatcher: agent, // 👈 usa el agente con timeout extendido
     });
 
     clearTimeout(timeout);
@@ -45,7 +52,6 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error en proxy:', error);
 
-    // Detecta si fue un timeout real
     if (error.name === 'AbortError') {
       return res.status(504).json({ error: 'Timeout de conexión con el servidor remoto' });
     }
@@ -57,3 +63,4 @@ router.post('/', async (req, res) => {
 });
 
 module.exports = router;
+
